@@ -72,6 +72,7 @@
 #include <asm/mwait.h>
 #include <asm/pci_x86.h>
 #include <asm/cpu.h>
+#include <asm/kasan.h>
 #ifdef CONFIG_X86_IOPL_IOPERM
 #include <asm/io_bitmap.h>
 #endif
@@ -1379,6 +1380,8 @@ asmlinkage __visible void __init xen_start_kernel(struct start_info *si)
 
 	/* Get mfn list */
 	xen_build_dynamic_phys_to_machine();
+
+	kasan_early_init();
 
 	/* Work out if we support NX */
 	get_cpu_cap(&boot_cpu_data);

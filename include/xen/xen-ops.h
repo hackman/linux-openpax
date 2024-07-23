@@ -226,4 +226,14 @@ static inline bool xen_virtio_restricted_mem_acc(struct virtio_device *dev)
 }
 #endif /* CONFIG_XEN_GRANT_DMA_OPS */
 
+#ifdef CONFIG_XEN_PV
+pgd_t *xen_pv_kasan_early_init(void);
+void xen_pv_kasan_pin_pgd(pgd_t *pgd);
+void xen_pv_kasan_unpin_pgd(pgd_t *pgd);
+#else
+static inline pgd_t *xen_pv_kasan_early_init(void) { return NULL; }
+static inline void xen_pv_kasan_pin_pgd(pgd_t *pgd) { }
+static inline void xen_pv_kasan_unpin_pgd(pgd_t *pgd) { }
+#endif
+
 #endif /* INCLUDE_XEN_OPS_H */

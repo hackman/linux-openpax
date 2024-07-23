@@ -13,6 +13,9 @@
 #include <linux/sched/task.h>
 #include <linux/vmalloc.h>
 
+#include <xen/xen.h>
+#include <xen/xen-ops.h>
+
 #include <asm/e820/types.h>
 #include <asm/pgalloc.h>
 #include <asm/tlbflush.h>
@@ -312,6 +315,11 @@ void __init kasan_early_init(void)
 	for (i = 0; pgtable_l5_enabled() && i < PTRS_PER_P4D; i++)
 		kasan_early_shadow_p4d[i] = __p4d(p4d_val);
 
+	if (xen_pv_domain()) {
+		pgd_t *pv_top_pgt = xen_pv_kasan_early_init();
+		kasan_map_early_shadow(pv_top_pgt);
+	}
+
 	kasan_map_early_shadow(early_top_pgt);
 	kasan_map_early_shadow(init_top_pgt);
 }
@@ -367,6 +375,8 @@ void __init kasan_init(void)
 		set_pgd(&early_top_pgt[pgd_index(KASAN_SHADOW_END)],
 				__pgd(__pa(tmp_p4d_table) | _KERNPG_TABLE));
 	}
+
+	xen_pv_kasan_pin_pgd(early_top_pgt);
 
 	load_cr3(early_top_pgt);
 	__flush_tlb_all();
@@ -431,6 +441,8 @@ void __init kasan_init(void)
 
 	load_cr3(init_top_pgt);
 	__flush_tlb_all();
+
+	xen_pv_kasan_unpin_pgd(early_top_pgt);
 
 	/*
 	 * kasan_early_shadow_page has been used as early shadow memory, thus

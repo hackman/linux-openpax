@@ -140,7 +140,7 @@ config KASAN_OUTLINE
 
 config KASAN_INLINE
 	bool "Inline instrumentation"
-	depends on !ARCH_DISABLE_KASAN_INLINE
+	depends on !ARCH_DISABLE_KASAN_INLINE && !XEN_PV
 	help
 	  Makes the compiler directly insert memory accessibility checks before
 	  each memory access. Faster than KASAN_OUTLINE (gives ~x2 boost for
@@ -173,7 +173,7 @@ config KASAN_STACK
 
 config KASAN_VMALLOC
 	bool "Check accesses to vmalloc allocations"
-	depends on HAVE_ARCH_KASAN_VMALLOC
+	depends on HAVE_ARCH_KASAN_VMALLOC && !XEN_PV
 	help
 	  Makes KASAN check the validity of accesses to vmalloc allocations.
 
