@@ -13,6 +13,8 @@
 #define SMP_CACHE_BYTES L1_CACHE_BYTES
 #endif
 
+#define __read_only __attribute__((__section__(".data..read_only")))
+
 /**
  * SMP_CACHE_ALIGN - align a value to the L2 cacheline size
  * @x: value to align
