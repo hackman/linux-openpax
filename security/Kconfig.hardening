@@ -302,6 +302,30 @@ config BUG_ON_DATA_CORRUPTION
 
 endmenu
 
+menu "Filesystem protections"
+
+config DEVICE_SIDECHANNEL_PROTECTION
+	bool "Eliminate stat/notify-based device sidechannels"
+	help
+	  If you say Y here, timing analyses on block or character
+	  devices like /dev/ptmx using stat or inotify/dnotify/fanotify
+	  will be thwarted for unprivileged users.
+	  No access or modify events will be triggered through
+	  inotify/dnotify/fanotify for such devices.
+	  If a process without CAP_MKNOD stats such a device, the last
+	  access and last modify times will match the device's create time.
+	  This feature will prevent attacks that may at a minimum allow
+	  an attacker to determine the administrator's password length.
+
+	  Ported from older GPLv2 GRsecurity/PaX code.
+	  For more information see:
+	  *   https://grsecurity.net/
+	  *   https://pax.grsecurity.net/
+
+	  If unsure, say N.
+
+endmenu
+
 config CC_HAS_RANDSTRUCT
 	def_bool $(cc-option,-frandomize-layout-seed-file=/dev/null)
 	# Randstruct was first added in Clang 15, but it isn't safe to use until
