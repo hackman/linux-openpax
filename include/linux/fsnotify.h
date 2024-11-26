@@ -78,6 +78,11 @@ static inline int fsnotify_parent(struct dentry *dentry, __u32 mask,
 {
 	struct inode *inode = d_inode(dentry);
 
+#ifdef CONFIG_DEVICE_SIDECHANNEL_PROTECTION
+	if ((mask == FS_ACCESS || mask == FS_MODIFY) && is_sidechannel_device(inode))
+		return 0;
+#endif
+
 	if (!fsnotify_sb_has_watchers(inode->i_sb))
 		return 0;
 
