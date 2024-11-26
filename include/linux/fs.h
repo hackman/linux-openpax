@@ -3728,4 +3728,14 @@ static inline bool vfs_empty_path(int dfd, const char __user *path)
 
 bool generic_atomic_write_valid(struct iov_iter *iter, loff_t pos);
 
+static inline bool is_sidechannel_device(const struct inode *inode)
+{
+#ifdef CONFIG_DEVICE_SIDECHANNEL_PROTECTION
+	umode_t mode = inode->i_mode;
+	return ((S_ISCHR(mode) || S_ISBLK(mode)) && (mode & (S_IROTH | S_IWOTH)));
+#else
+	return false;
+#endif
+}
+
 #endif /* _LINUX_FS_H */
