@@ -57,8 +57,18 @@ void generic_fillattr(struct mnt_idmap *idmap, u32 request_mask,
 	stat->gid = vfsgid_into_kgid(vfsgid);
 	stat->rdev = inode->i_rdev;
 	stat->size = i_size_read(inode);
+#ifdef CONFIG_DEVICE_SIDECHANNEL_PROTECTION
+	if (is_sidechannel_device(inode) && !capable(CAP_MKNOD)) {
+		stat->atime = inode_get_ctime(inode);
+		stat->mtime = inode_get_ctime(inode);
+	} else {
+		stat->atime = inode_get_atime(inode);
+		stat->mtime = inode_get_mtime(inode);
+	}
+#else
 	stat->atime = inode_get_atime(inode);
 	stat->mtime = inode_get_mtime(inode);
+#endif
 	stat->ctime = inode_get_ctime(inode);
 	stat->blksize = i_blocksize(inode);
 	stat->blocks = inode->i_blocks;
@@ -138,6 +148,7 @@ int vfs_getattr_nosec(const struct path *path, struct kstat *stat,
 {
 	struct mnt_idmap *idmap;
 	struct inode *inode = d_backing_inode(path->dentry);
+	int retval;
 
 	memset(stat, 0, sizeof(*stat));
 	stat->result_mask |= STATX_BASIC_STATS;
@@ -162,10 +173,18 @@ int vfs_getattr_nosec(const struct path *path, struct kstat *stat,
 				  STATX_ATTR_DAX);
 
 	idmap = mnt_idmap(path->mnt);
-	if (inode->i_op->getattr)
-		return inode->i_op->getattr(idmap, path, stat,
+	if (inode->i_op->getattr) {
+		retval = inode->i_op->getattr(idmap, path, stat,
 					    request_mask,
 					    query_flags | AT_GETATTR_NOSEC);
+#ifdef CONFIG_DEVICE_SIDECHANNEL_PROTECTION
+		if (!retval && is_sidechannel_device(inode) && !capable(CAP_MKNOD)) {
+			stat->atime = stat->ctime;
+			stat->mtime = stat->ctime;
+		}
+#endif
+		return retval;
+	}
 
 	generic_fillattr(idmap, request_mask, inode, stat);
 	return 0;
